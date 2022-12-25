@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { Writable, WritableOptions } from 'stream';
 import { Mixer } from './mixer';
 export interface InputArguments extends WritableOptions {
@@ -20,9 +19,9 @@ export declare class Input extends Writable {
     lastClearTime: number;
     constructor(args: InputArguments);
     setMixer(mixer: Mixer): void;
-    read(samples: any): Buffer;
-    readMono(samples: any): Buffer;
-    readStereo(samples: any): Buffer;
+    read(samples: any): any;
+    readMono(samples: any): any;
+    readStereo(samples: any): any;
     availableSamples(length?: number): number;
     _write(chunk: any, encoding: any, next: any): void;
     setVolume(volume: number): void;

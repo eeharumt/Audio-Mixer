@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import { Input, InputArguments } from './input';
 import { Readable, ReadableOptions } from 'stream';
 export interface MixerArguments extends ReadableOptions {
@@ -16,6 +15,7 @@ export declare class Mixer extends Readable {
     private static INPUT_IDLE_TIMEOUT;
     private _timer;
     constructor(args: MixerArguments);
+    mix(sample1: any, sample2: any): number;
     _read(): void;
     input(args: InputArguments, channel?: number): Input;
     removeInput(input: Input): void;

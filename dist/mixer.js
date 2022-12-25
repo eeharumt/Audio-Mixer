@@ -31,6 +31,27 @@ class Mixer extends stream_1.Readable {
         this.args = args;
         this.inputs = [];
     }
+    mix(sample1, sample2) {
+        let mixed = 0;
+        if (this.sampleByteLength == 2) {
+            sample1 += 32768;
+            sample2 += 32768;
+            if (sample1 < 32768 || sample2 < 32768) {
+                mixed = Math.floor(sample1 * sample2 / 32768);
+            }
+            else {
+                mixed = 2 * (sample1 + sample2) - Math.floor((sample1 * sample2) / 32768) - 65536;
+            }
+            if (mixed == 65536) {
+                mixed = 65535;
+            }
+            mixed -= 32768;
+        }
+        else {
+            mixed = Math.floor(sample2 / 2 + sample2 / 2);
+        }
+        return mixed;
+    }
     _read() {
         let samples = this.getMaxSamples();
         if (samples > 0 && samples !== Number.MAX_VALUE) {
@@ -40,7 +61,9 @@ class Mixer extends stream_1.Readable {
                 if (input.hasData) {
                     let inputBuffer = this.args.channels === 1 ? input.readMono(samples) : input.readStereo(samples);
                     for (let i = 0; i < samples * this.args.channels; i++) {
-                        let sample = this.readSample.call(mixedBuffer, i * this.sampleByteLength) + Math.floor(this.readSample.call(inputBuffer, i * this.sampleByteLength) / this.inputs.length);
+                        let s1 = this.readSample.call(mixedBuffer, i * this.sampleByteLength);
+                        let s2 = this.readSample.call(inputBuffer, i * this.sampleByteLength);
+                        let sample = this.mix(s1, s2);
                         this.writeSample.call(mixedBuffer, sample, i * this.sampleByteLength);
                     }
                 }

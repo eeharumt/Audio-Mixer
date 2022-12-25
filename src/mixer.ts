@@ -21,7 +21,7 @@ export class Mixer extends Readable {
     protected needReadable: boolean = true;
 
     private static INPUT_IDLE_TIMEOUT = 250;
-    private _timer:any = null
+    private _timer: any = null
 
     constructor(args: MixerArguments) {
         super(args);
@@ -55,6 +55,29 @@ export class Mixer extends Readable {
         this.inputs = [];
     }
 
+    mix(sample1, sample2) {
+        let mixed = 0; 
+        if (this.sampleByteLength == 2) {
+            sample1 += 32768
+            sample2 += 32768
+            if (sample1 < 32768 || sample2 < 32768) {
+                mixed = Math.floor(sample1 * sample2 / 32768)
+            }
+            else {
+                mixed = 2 * (sample1 + sample2) - Math.floor((sample1 * sample2) / 32768) - 65536
+
+            }
+
+            if (mixed == 65536) {
+                mixed = 65535
+            }
+            mixed -= 32768
+        } else {
+            mixed = Math.floor(sample2 / 2 + sample2 / 2)
+        }
+        return mixed
+    }
+
     /**
      * Called when this stream is read from
      */
@@ -71,14 +94,17 @@ export class Mixer extends Readable {
                     let inputBuffer = this.args.channels === 1 ? input.readMono(samples) : input.readStereo(samples);
 
                     for (let i = 0; i < samples * this.args.channels; i++) {
-                        let sample = this.readSample.call(mixedBuffer, i * this.sampleByteLength) + Math.floor(this.readSample.call(inputBuffer, i * this.sampleByteLength) / this.inputs.length);
+                        // let sample = this.readSample.call(mixedBuffer, i * this.sampleByteLength) + Math.floor(this.readSample.call(inputBuffer, i * this.sampleByteLength) / this.inputs.length);
+                        let s1 = this.readSample.call(mixedBuffer, i * this.sampleByteLength);
+                        let s2 = this.readSample.call(inputBuffer, i * this.sampleByteLength);
+                        let sample = this.mix(s1, s2)
                         this.writeSample.call(mixedBuffer, sample, i * this.sampleByteLength);
                     }
                 }
             });
 
             this.push(mixedBuffer);
-        } else if(this.needReadable) {
+        } else if (this.needReadable) {
             clearImmediate(this._timer)
             this._timer = setImmediate(this._read.bind(this));
         }
@@ -133,7 +159,7 @@ export class Mixer extends Readable {
         this.inputs = [];
     }
 
-    public close(){
+    public close() {
         this.needReadable = false
     }
 
